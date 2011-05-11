@@ -1,9 +1,9 @@
 /* http://keith-wood.name/svg.html
-   SVG/jQuery DOM compatibility for jQuery v1.4.3.
-   Written by Keith Wood (kbwood{at}iinet.com.au) April 2009.
-   Dual licensed under the GPL (http://dev.jquery.com/browser/trunk/jquery/GPL-LICENSE.txt) and 
-   MIT (http://dev.jquery.com/browser/trunk/jquery/MIT-LICENSE.txt) licenses. 
-   Please attribute the author if you use it. */
+	 SVG/jQuery DOM compatibility for jQuery v1.4.3.
+	 Written by Keith Wood (kbwood{at}iinet.com.au) April 2009.
+	 Dual licensed under the GPL (http://dev.jquery.com/browser/trunk/jquery/GPL-LICENSE.txt) and
+	 MIT (http://dev.jquery.com/browser/trunk/jquery/MIT-LICENSE.txt) licenses.
+	 Please attribute the author if you use it. */
 
 (function($) { // Hide scope, no $ conflict
 
@@ -19,7 +19,7 @@ $.fn.addClass = function(origAddClass) {
 					if ($.inArray(className, classes.split(/\s+/)) == -1) {
 						classes += (classes ? ' ' : '') + className;
 						(node.className ? node.className.baseVal = classes :
-							node.setAttribute('class',  classes));
+							node.setAttribute('class', classes));
 					}
 				});
 			}
@@ -94,16 +94,16 @@ $.fn.attr = function(origAttr) {
 	return function(name, value, type) {
 		if (typeof name === 'string' && value === undefined) {
 			var val = origAttr.apply(this, [name, value, type]);
-			if (val && val.baseVal && val.baseVal.numberOfItems != null) { // Transform
+			if (val instanceof SVGAnimatedTransformList) { // Transform
 				value = '';
 				val = val.baseVal;
 				for (var i = 0; i < val.numberOfItems; i++) {
 					var item = val.getItem(i);
 					switch (item.type) {
 						case 1: value += ' matrix(' + item.matrix.a + ',' + item.matrix.b + ',' +
-									item.matrix.c + ',' + item.matrix.d + ',' +
-									item.matrix.e + ',' + item.matrix.f + ')';
-								break;
+                      item.matrix.c + ',' + item.matrix.d + ',' +
+                      item.matrix.e + ',' + item.matrix.f + ')';
+                    break;
 						case 2: value += ' translate(' + item.matrix.e + ',' + item.matrix.f + ')'; break;
 						case 3: value += ' scale(' + item.matrix.a + ',' + item.matrix.d + ')'; break;
 						case 4: value += ' rotate(' + item.angle + ')'; break; // Doesn't handle new origin
@@ -112,8 +112,18 @@ $.fn.attr = function(origAttr) {
 					}
 				}
 				val = value.substring(1);
+			} else if (val && val.baseVal && val.baseVal.numberOfItems != null) { // Other lists
+				value = '';
+				val = val.baseVal;
+				for (var i = 0; i < val.numberOfItems; i++) {
+					var item = val.getItem(i);
+					value += ' ' + item.valueAsString;
+				}
+				val = value.substring(1);
+			} else if (val && val.baseVal) {
+				val = val.baseVal.valueAsString;
 			}
-			return (val && val.baseVal ? val.baseVal.valueAsString : val);
+			return val;
 		}
 		var options = name;
 		if (typeof name === 'string') {
@@ -267,7 +277,7 @@ $.expr.filter.ATTR = function(origFilterAttr) {
 
 /*
 	Change Sizzle initialisation (line 1425) in jQuery v1.3.2 base code...
-	
+
 	if ( toString.call(checkSet) === "[object Array]" ) {
 		if ( !prune ) {
 			results.push.apply( results, checkSet );
@@ -285,9 +295,9 @@ $.expr.filter.ATTR = function(origFilterAttr) {
 			}
 		}
 	}
-	
+
 	Change fallback makeArray (line 2076) implementation in jQuery Sizzle...
-	
+
 			if ( typeof array.length === "number" ) {
 				for ( var i = 0, l = array.length; i < l; i++ ) {
 					ret.push( array[i] || array.item(i) ); // Here
@@ -299,7 +309,7 @@ $.expr.filter.ATTR = function(origFilterAttr) {
 	Events management requires changes to jQuery v1.3.2 base code...
 
 	In $.event.add (line 2437)...
-	
+
 				if ( !jQuery.event.special[type] || jQuery.event.special[type].setup.call(elem, data, namespaces) === false ) {
 					// Bind the global event handler to the element
 					try { // Here
@@ -312,7 +322,7 @@ $.expr.filter.ATTR = function(origFilterAttr) {
 				}
 
 	In $.event.remove (line 2521)...
-	
+
 							if ( !jQuery.event.special[type] || jQuery.event.special[type].teardown.call(elem, namespaces) === false ) {
 								try { // Here
 									elem.removeEventListener(type, jQuery.data(elem, "handle"), false);
